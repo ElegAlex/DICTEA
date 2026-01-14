@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+ENV/
+
+# Distribution / Build
+build/
+dist/
+installer/
+*.spec
+*.exe
+*.msi
+
+# Modèles ML (trop volumineux pour git)
+models/
+*.bin
+*.pt
+*.onnx
+
+# Données utilisateur
+output/
+temp/
+*.wav
+*.mp3
+*.m4a
+
+# Logs
+*.log
+transcription_app.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# HuggingFace cache
+.cache/

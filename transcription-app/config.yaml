@@ -1,0 +1,84 @@
+# =============================================================================
+# Configuration Application Transcription
+# =============================================================================
+
+app:
+  name: "TranscriptionApp"
+  version: "1.0.0"
+  language: "fr"
+
+# --- Modèles de transcription ---
+transcription:
+  # Modèles disponibles: tiny, base, small, medium, large-v3
+  # Recommandé pour i7/16Go: medium
+  model: "medium"
+  
+  # Quantification: int8 (recommandé CPU), float16, float32
+  compute_type: "int8"
+  
+  # Langue par défaut (auto = détection automatique)
+  language: "fr"
+  
+  # Nombre de threads CPU (0 = auto, sinon nb cores physiques)
+  cpu_threads: 0
+  
+  # Filtrage VAD (accélère ~30% en filtrant silences)
+  vad_filter: true
+  
+  # Beam size pour décodage (5 = bon compromis qualité/vitesse)
+  beam_size: 5
+
+# --- Diarization (identification locuteurs) ---
+diarization:
+  # Mode: "quality" (Pyannote) ou "fast" (SpeechBrain)
+  mode: "quality"
+  
+  # Nombre minimum de locuteurs attendus (0 = auto)
+  min_speakers: 0
+  
+  # Nombre maximum de locuteurs attendus (0 = auto)
+  max_speakers: 0
+
+# --- Audio ---
+audio:
+  # Sample rate pour enregistrement (16000 = optimal Whisper)
+  sample_rate: 16000
+  
+  # Canaux (1 = mono, requis par Whisper)
+  channels: 1
+  
+  # Format d'export par défaut
+  export_format: "wav"
+  
+  # Périphérique d'entrée (null = défaut système)
+  input_device: null
+
+# --- Chemins ---
+paths:
+  # Dossier des modèles ML (relatif ou absolu)
+  models: "models"
+  
+  # Dossier de sortie par défaut
+  output: "output"
+  
+  # Fichiers temporaires
+  temp: "temp"
+
+# --- Interface ---
+ui:
+  # Thème: "system", "light", "dark"
+  theme: "system"
+  
+  # Afficher progression détaillée
+  detailed_progress: true
+  
+  # Langue interface
+  language: "fr"
+
+# --- Performance ---
+performance:
+  # Taille des chunks pour fichiers longs (minutes)
+  chunk_size_minutes: 10
+  
+  # Libération mémoire aggressive
+  aggressive_gc: true
