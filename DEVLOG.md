@@ -284,6 +284,140 @@ MainWindow
 
 ---
 
+## 2026-01-14 - Session 4 : Implémentation Fonctionnalités Avancées
+
+### Contexte
+- Tests unitaires et refactoring terminés (Sessions 2-3)
+- Prochaines étapes: gestion d'erreurs, batch processing, preview audio, CI/CD
+
+### Réalisé
+
+#### 1. Gestion d'erreurs améliorée
+- [x] **src/core/exceptions.py** (NEW ~260 lignes)
+  - Hiérarchie d'exceptions personnalisées (`DICTEAError` base class)
+  - Erreurs Audio: `AudioFileNotFoundError`, `AudioFormatError`, `AudioCorruptedError`, `AudioRecordingError`
+  - Erreurs Modèles: `ModelNotFoundError`, `ModelDownloadError`, `ModelLoadError`, `HuggingFaceTokenError`
+  - Erreurs Transcription: `TranscriptionCancelledError`, `TranscriptionFailedError`
+  - Erreurs Diarization: `DiarizationFailedError`, `NoSpeakersDetectedError`
+  - Erreurs Système: `InsufficientMemoryError`, `DiskSpaceError`
+  - Fonction `get_user_friendly_message()` pour messages utilisateur
+
+- [x] **src/ui/workers.py** (UPDATED)
+  - Validation des fichiers avant traitement
+  - Utilisation des exceptions personnalisées
+  - Messages d'erreur conviviaux
+
+#### 2. Traitement par lots (Batch Processing)
+- [x] **src/core/batch_processor.py** (NEW ~290 lignes)
+  - `BatchItemStatus` enum (PENDING, PROCESSING, COMPLETED, FAILED, SKIPPED)
+  - `BatchItem` dataclass pour chaque fichier
+  - `BatchResult` dataclass avec métriques (success_rate, total_time)
+  - `BatchOptions` dataclass (language, diarization, output_format, etc.)
+  - `BatchProcessor` class avec support annulation
+  - `get_audio_files_from_directory()` helper
+
+- [x] **src/ui/batch_dialog.py** (NEW ~390 lignes)
+  - Interface complète de traitement par lots
+  - Sélection fichiers/dossiers avec liste interactive
+  - Options: langue, diarization, format sortie (TXT/SRT/both)
+  - Barre de progression et statut par fichier
+  - Gestion annulation et fermeture propre
+
+- [x] **src/ui/workers.py** (UPDATED)
+  - `BatchWorker` class avec signaux de progression
+  - Intégration avec `BatchProcessor`
+
+- [x] **src/ui/main_window.py** (UPDATED)
+  - Bouton "📦 Traitement par lots" ajouté
+  - Handler `_on_batch_clicked()` pour ouvrir le dialogue
+
+#### 3. Preview Audio
+- [x] **src/ui/audio_player.py** (NEW ~160 lignes)
+  - Widget de lecture audio compact
+  - Contrôles: Play/Pause, Stop, Slider position, Volume
+  - Affichage temps courant/total
+  - Utilise QMediaPlayer + QAudioOutput
+
+- [x] **src/ui/main_window.py** (UPDATED)
+  - Intégration `AudioPlayerWidget` dans la section source
+  - Chargement automatique lors de l'import/enregistrement
+  - Arrêt automatique lors de la transcription/fermeture
+
+#### 4. CI/CD GitHub Actions
+- [x] **.github/workflows/ci.yml** (NEW)
+  - Job `test`: pytest avec couverture, skip tests slow/integration
+  - Job `lint`: Ruff (linting + formatting)
+  - Job `build-check`: Vérification des imports
+  - Support codecov pour rapports de couverture
+
+- [x] **transcription-app/ruff.toml** (NEW)
+  - Configuration Ruff pour le projet
+  - Rules: E, W, F, I, B, C4, UP, SIM
+  - Ignore spécifiques pour tests et __init__.py
+
+### Fichiers créés
+```
+transcription-app/src/
+├── core/
+│   ├── exceptions.py          # NEW - Gestion d'erreurs (~260 lignes)
+│   └── batch_processor.py     # NEW - Traitement par lots (~290 lignes)
+└── ui/
+    ├── batch_dialog.py        # NEW - Interface batch (~390 lignes)
+    └── audio_player.py        # NEW - Lecteur audio (~160 lignes)
+
+.github/workflows/
+└── ci.yml                     # NEW - Pipeline CI/CD
+
+transcription-app/
+└── ruff.toml                  # NEW - Config linting
+```
+
+### Fichiers modifiés
+- `src/ui/workers.py` - Ajout BatchWorker, amélioration erreurs
+- `src/ui/main_window.py` - Intégration batch + audio player
+
+### Métriques
+- **Nouveau code:** ~1100 lignes
+- **Fichiers créés:** 6
+- **Fonctionnalités:** 4 (erreurs, batch, preview, CI/CD)
+
+### Architecture mise à jour
+```
+MainWindow
+├── Source Section
+│   ├── Import / Record / Batch buttons
+│   └── AudioPlayerWidget (NEW)
+├── Options Section
+├── Transcription Button
+├── Progress Section
+└── Results Section
+
+BatchDialog (NEW)
+├── Files Section (list + add/remove)
+├── Options Section
+├── Output Section
+├── Progress Section
+└── Action Buttons
+
+Exceptions Hierarchy (NEW)
+├── DICTEAError (base)
+├── AudioError
+├── ModelError
+├── TranscriptionError
+├── DiarizationError
+└── SystemError
+```
+
+### Prochaines étapes possibles
+- [ ] Tests UI avec pytest-qt
+- [ ] Ajout support drag & drop pour fichiers
+- [ ] Export batch en CSV de statistiques
+- [ ] Amélioration UX: thèmes, raccourcis clavier
+- [ ] Support multi-langue UI (i18n)
+- [ ] Packaging avec PyInstaller/Nuitka
+
+---
+
 ## Template pour prochaines sessions
 
 ```markdown

@@ -20,6 +20,8 @@ from ..core.diarizer import Diarizer
 from ..core.audio_processor import AudioRecorder, AudioProcessor
 from ..utils.config import get_config
 from .workers import TranscriptionWorker, FullPipelineWorker, WorkerThread
+from .batch_dialog import BatchDialog
+from .audio_player import AudioPlayerWidget
 
 logger = logging.getLogger(__name__)
 
@@ -83,11 +85,20 @@ class MainWindow(QMainWindow):
         self.btn_record.setCheckable(True)
         buttons_layout.addWidget(self.btn_record)
 
+        buttons_layout.addStretch()
+
+        self.btn_batch = QPushButton("📦 Traitement par lots")
+        self.btn_batch.setMinimumHeight(40)
+        buttons_layout.addWidget(self.btn_batch)
+
         layout.addLayout(buttons_layout)
 
         self.lbl_source_info = QLabel("Aucun fichier sélectionné")
         self.lbl_source_info.setStyleSheet("color: #666; padding: 5px;")
         layout.addWidget(self.lbl_source_info)
+
+        self.audio_player = AudioPlayerWidget()
+        layout.addWidget(self.audio_player)
 
         return group
 
@@ -219,6 +230,7 @@ class MainWindow(QMainWindow):
         """Connecte les signaux aux slots."""
         self.btn_import.clicked.connect(self._on_import_clicked)
         self.btn_record.clicked.connect(self._on_record_clicked)
+        self.btn_batch.clicked.connect(self._on_batch_clicked)
         self.btn_transcribe.clicked.connect(self._on_transcribe_clicked)
         self.btn_copy.clicked.connect(self._on_copy_clicked)
         self.btn_save_txt.clicked.connect(self._on_save_txt_clicked)
@@ -245,6 +257,7 @@ class MainWindow(QMainWindow):
             info = self.processor.get_audio_info(path)
             self._audio_path = path
             self._update_source_info_for_file(path, info)
+            self.audio_player.load_audio(path)
             self.btn_transcribe.setEnabled(True)
             self.status_bar.showMessage(f"Fichier chargé: {path.name}")
         except Exception as e:
@@ -268,6 +281,15 @@ class MainWindow(QMainWindow):
         mins = int(seconds // 60)
         secs = int(seconds % 60)
         return f"{mins}min {secs}s"
+
+    # =========================================================================
+    # Handlers - Batch Processing
+    # =========================================================================
+
+    def _on_batch_clicked(self) -> None:
+        """Ouvre le dialogue de traitement par lots."""
+        dialog = BatchDialog(self.transcriber, self.diarizer, parent=self)
+        dialog.exec()
 
     # =========================================================================
     # Handlers - Enregistrement
@@ -323,6 +345,7 @@ class MainWindow(QMainWindow):
 
         self.lbl_source_info.setText(f"🎙️ Enregistrement sauvegardé: {self._audio_path.name}")
         self.lbl_source_info.setStyleSheet("color: #4CAF50; padding: 5px;")
+        self.audio_player.load_audio(self._audio_path)
         self.btn_transcribe.setEnabled(True)
         self.status_bar.showMessage(f"Enregistrement sauvegardé: {output_path}")
 
@@ -372,6 +395,7 @@ class MainWindow(QMainWindow):
 
     def _disable_ui_for_transcription(self) -> None:
         """Désactive l'UI pendant la transcription."""
+        self.audio_player.stop()
         self.btn_transcribe.setText("⏹️ Annuler")
         self.btn_import.setEnabled(False)
         self.btn_record.setEnabled(False)
@@ -526,6 +550,8 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         """Gère la fermeture de la fenêtre."""
+        self.audio_player.stop()
+
         if self._current_worker and self._current_worker.is_running():
             self._current_worker.stop()
 
