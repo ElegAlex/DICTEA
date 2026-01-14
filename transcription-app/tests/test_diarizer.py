@@ -148,9 +148,8 @@ class TestDiarizer:
         assert diarizer.pipeline is None
         assert not hasattr(diarizer, "_embedder") or diarizer._embedder is None
 
-    @patch("src.core.diarizer.Pipeline")
-    @patch("src.core.diarizer.torch")
-    def test_load_pyannote(self, mock_torch, mock_pipeline, mock_diarizer_deps):
+    @patch("pyannote.audio.Pipeline")
+    def test_load_pyannote(self, mock_pipeline, mock_diarizer_deps):
         """Vérifie le chargement de Pyannote."""
         mock_pipeline_instance = MagicMock()
         mock_pipeline.from_pretrained.return_value = mock_pipeline_instance
@@ -166,8 +165,10 @@ class TestDiarizer:
     @pytest.mark.slow
     def test_load_speechbrain_mock(self, mock_diarizer_deps):
         """Vérifie le chargement de SpeechBrain (mocké)."""
-        with patch("src.core.diarizer.SpeakerRecognition") as mock_sr:
-            with patch("src.core.diarizer.VAD") as mock_vad:
+        pytest.importorskip("speechbrain")
+
+        with patch("speechbrain.inference.VAD") as mock_vad:
+            with patch("speechbrain.inference.SpeakerRecognition") as mock_sr:
                 mock_sr.from_hparams.return_value = MagicMock()
                 mock_vad.from_hparams.return_value = MagicMock()
 
