@@ -130,13 +130,20 @@ class MainWindow(QMainWindow):
         layout.addSpacing(20)
 
         # Nombre de locuteurs
-        layout.addWidget(QLabel("Locuteurs:"))
-        self.spin_speakers = QSpinBox()
-        self.spin_speakers.setRange(0, 20)
-        self.spin_speakers.setValue(0)
-        self.spin_speakers.setSpecialValueText("Auto")
-        self.spin_speakers.setToolTip("0 = détection automatique")
-        layout.addWidget(self.spin_speakers)
+        layout.addWidget(QLabel("Locuteurs (min/max):"))
+        self.spin_min_speakers = QSpinBox()
+        self.spin_min_speakers.setRange(0, 20)
+        self.spin_min_speakers.setValue(0)
+        self.spin_min_speakers.setSpecialValueText("Auto")
+        self.spin_min_speakers.setToolTip("0 = détection automatique")
+        layout.addWidget(self.spin_min_speakers)
+
+        self.spin_max_speakers = QSpinBox()
+        self.spin_max_speakers.setRange(0, 20)
+        self.spin_max_speakers.setValue(0)
+        self.spin_max_speakers.setSpecialValueText("Auto")
+        self.spin_max_speakers.setToolTip("0 = détection automatique")
+        layout.addWidget(self.spin_max_speakers)
 
         layout.addStretch()
 
@@ -390,7 +397,8 @@ class MainWindow(QMainWindow):
         return {
             "language": language if language != "auto" else None,
             "use_diarization": self.chk_diarization.isChecked(),
-            "max_speakers": self.spin_speakers.value(),
+            "min_speakers": self.spin_min_speakers.value(),
+            "max_speakers": self.spin_max_speakers.value(),
         }
 
     def _disable_ui_for_transcription(self) -> None:
@@ -422,6 +430,7 @@ class MainWindow(QMainWindow):
             transcriber=self.transcriber,
             diarizer=self.diarizer,
             language=options["language"],
+            min_speakers=options["min_speakers"],
             max_speakers=options["max_speakers"],
         )
         worker.transcription_done.connect(self._on_transcription_done)
@@ -497,7 +506,8 @@ class MainWindow(QMainWindow):
 
     def _on_diarization_toggled(self, checked: bool) -> None:
         """Active/désactive les options de diarization."""
-        self.spin_speakers.setEnabled(checked)
+        self.spin_min_speakers.setEnabled(checked)
+        self.spin_max_speakers.setEnabled(checked)
 
     # =========================================================================
     # Handlers - Export
