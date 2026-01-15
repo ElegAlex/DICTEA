@@ -42,6 +42,16 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
+      - name: Free disk space
+        run: |
+          # Remove unnecessary large packages to free up space
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -63,6 +73,8 @@ jobs:
           pip install pyinstaller pillow
           pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements.txt
+          # Clean pip cache to save space
+          pip cache purge
 
       - name: Build Linux AppImage
         working-directory: transcription-app
