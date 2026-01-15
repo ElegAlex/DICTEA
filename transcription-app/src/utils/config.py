@@ -71,7 +71,7 @@ class AppConfig:
         config = cls()
 
         if config_path and config_path.exists():
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
             if "transcription" in data:
