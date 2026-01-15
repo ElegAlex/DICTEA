@@ -67,6 +67,21 @@ class AudioRecordingError(AudioError):
         )
 
 
+class AudioDependencyError(AudioError):
+    """Dépendance audio manquante (ex: FFmpeg)."""
+
+    def __init__(self, details: str):
+        super().__init__(
+            f"Dépendance audio manquante: {details}",
+            "Dépendance audio manquante (FFmpeg).\n\n"
+            "L'application ne peut pas lire certains formats (m4a, mp3, etc.).\n"
+            "Installez FFmpeg ou placez ffmpeg.exe et ffprobe.exe à côté de "
+            "DICTEA.exe.\n\n"
+            "Astuce: vous pouvez définir la variable DICTEA_FFMPEG_DIR pour "
+            "pointer vers un dossier contenant ces binaires."
+        )
+
+
 # =============================================================================
 # Erreurs Modèles ML
 # =============================================================================

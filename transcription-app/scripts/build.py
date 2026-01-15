@@ -37,12 +37,14 @@ APP_NAME = "DICTEA"
 APP_VERSION = "1.0.0"
 APP_DESCRIPTION = "Transcription audio offline avec diarisation"
 APP_AUTHOR = "DICTEA Team"
+FFMPEG_WINDOWS_URL = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
 
 # Chemins
 ROOT_DIR = Path(__file__).parent.parent
 BUILD_DIR = ROOT_DIR / "build"
 DIST_DIR = ROOT_DIR / "dist"
 RESOURCES_DIR = ROOT_DIR / "resources"
+FFMPEG_DIR = BUILD_DIR / "ffmpeg"
 
 # Configuration Wine
 WINE_PYTHON_VERSION = "3.11.9"
@@ -64,6 +66,45 @@ def print_step(msg: str) -> None:
 def run_cmd(cmd: list, **kwargs) -> subprocess.CompletedProcess:
     """Exécute une commande avec gestion d'erreur."""
     return subprocess.run(cmd, **kwargs)
+
+
+def _find_ffmpeg_binaries(root: Path) -> tuple[Path | None, Path | None]:
+    """Recherche ffmpeg.exe et ffprobe.exe dans un dossier."""
+    ffmpeg_exe = next(root.rglob("ffmpeg.exe"), None)
+    ffprobe_exe = next(root.rglob("ffprobe.exe"), None)
+    return ffmpeg_exe, ffprobe_exe
+
+
+def ensure_windows_ffmpeg() -> list[tuple[str, str]]:
+    """Télécharge et prépare FFmpeg pour les builds Windows."""
+    FFMPEG_DIR.mkdir(parents=True, exist_ok=True)
+
+    ffmpeg_exe, ffprobe_exe = _find_ffmpeg_binaries(FFMPEG_DIR)
+    if ffmpeg_exe and ffprobe_exe:
+        return [(str(ffmpeg_exe), "."), (str(ffprobe_exe), ".")]
+
+    print_step("FFmpeg introuvable, téléchargement...")
+    zip_path = BUILD_DIR / "ffmpeg-release-essentials.zip"
+    if not zip_path.exists():
+        result = run_cmd(["wget", "-q", "--show-progress", "-O", str(zip_path), FFMPEG_WINDOWS_URL])
+        if result.returncode != 0:
+            raise RuntimeError("Échec du téléchargement de FFmpeg")
+
+    print_step("Extraction de FFmpeg...")
+    if FFMPEG_DIR.exists():
+        shutil.rmtree(FFMPEG_DIR)
+    FFMPEG_DIR.mkdir(parents=True, exist_ok=True)
+
+    import zipfile
+
+    with zipfile.ZipFile(zip_path, "r") as archive:
+        archive.extractall(FFMPEG_DIR)
+
+    ffmpeg_exe, ffprobe_exe = _find_ffmpeg_binaries(FFMPEG_DIR)
+    if not (ffmpeg_exe and ffprobe_exe):
+        raise RuntimeError("FFmpeg téléchargé mais binaires introuvables")
+
+    return [(str(ffmpeg_exe), "."), (str(ffprobe_exe), ".")]
 
 
 def clean() -> None:
@@ -252,11 +293,14 @@ def build_windows_wine() -> Path:
         print("  Lancer: python scripts/build.py --setup-wine")
         sys.exit(1)
 
+    ffmpeg_binaries = ensure_windows_ffmpeg()
+
     # Créer le fichier .spec pour Windows avec dépendances ML (liste manuelle)
     spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 from pathlib import Path
 
 datas = [('config.yaml', '.')]
+binaries = {ffmpeg_binaries!r}
 
 # Hidden imports listés manuellement (évite collect_submodules qui crash avec Wine)
 hiddenimports = [
@@ -296,7 +340,7 @@ hiddenimports = [
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
@@ -607,12 +651,15 @@ def build_windows_native() -> Path:
     """Build Windows natif (quand on est sur Windows)."""
     print_header("Build Windows (PyInstaller)")
 
+    ffmpeg_binaries = ensure_windows_ffmpeg()
+
     spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 datas = [('config.yaml', '.')]
 datas += collect_data_files('faster_whisper')
+binaries = {ffmpeg_binaries!r}
 
 hiddenimports = [
     'tiktoken_ext.openai_public',
@@ -631,7 +678,7 @@ hiddenimports += collect_submodules('pyannote')
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[],
+    binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],

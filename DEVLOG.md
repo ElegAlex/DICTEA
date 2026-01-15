@@ -5,6 +5,37 @@
 
 ---
 
+## 2026-01-15 - Session 6 : Support FFmpeg Windows
+
+### Contexte
+- Signalement: l'exécutable Windows ne reconnaît pas certains formats audio (m4a).
+- Suspect: FFmpeg absent dans le bundle Windows.
+
+### Réalisé
+- [x] Ajout d'une vérification explicite de FFmpeg dans le traitement audio.
+- [x] Messages d'erreur utilisateur plus clairs pour dépendance manquante.
+- [x] Validation audio côté workers (transcription/diarization).
+- [x] Build Windows mis à jour pour inclure FFmpeg (téléchargement automatique).
+
+### Fichiers modifiés
+- `transcription-app/src/core/audio_processor.py` - Détection/configuration FFmpeg, validation audio.
+- `transcription-app/src/core/exceptions.py` - Nouvelle erreur AudioDependencyError.
+- `transcription-app/src/core/diarizer.py` - Vérification FFmpeg avant chargement audio.
+- `transcription-app/src/ui/workers.py` - Validation audio avant traitement.
+- `transcription-app/src/ui/main_window.py` - Messages d'erreur plus précis.
+- `transcription-app/scripts/build.py` - Téléchargement/embarquage FFmpeg dans le build Windows.
+
+### Décisions prises
+- FFmpeg devient une dépendance requise pour décoder les formats compressés (m4a, mp3).
+- Le build Windows échoue si FFmpeg n'est pas disponible.
+
+### Prochaines étapes
+- [ ] Tester un build Windows propre pour confirmer la lecture m4a.
+- [ ] Documenter l'installation manuelle de FFmpeg pour l'utilisateur final.
+
+### Problèmes/Blocages
+- Nécessite une validation sur machine Windows réelle.
+
 ## 2026-01-14 - Session 1 : Analyse et Documentation BMAD
 
 ### Contexte initial

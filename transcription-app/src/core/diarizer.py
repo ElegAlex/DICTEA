@@ -8,6 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from .audio_processor import AudioProcessor
 from ..utils.config import DiarizationConfig, get_config
 from .transcriber import TranscriptionResult
 
@@ -177,6 +178,8 @@ class Diarizer:
 
         if progress_callback:
             progress_callback("Préparation audio...", 20.0)
+
+        AudioProcessor().ensure_ffmpeg()
 
         # Charger l'audio avec pydub (supporte tous les formats via ffmpeg)
         audio = AudioSegment.from_file(str(audio_path))

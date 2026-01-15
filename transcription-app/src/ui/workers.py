@@ -13,7 +13,6 @@ from ..core.audio_processor import AudioProcessor
 from ..core.diarizer import DiarizationResult, Diarizer, assign_speakers_to_transcription
 from ..core.exceptions import (
     AudioFileNotFoundError,
-    AudioFormatError,
     DICTEAError,
     HuggingFaceTokenError,
     ModelLoadError,
@@ -76,8 +75,7 @@ class TranscriptionWorker(QObject):
         """Valide le fichier d'entrée."""
         if not self.audio_path.exists():
             raise AudioFileNotFoundError(str(self.audio_path))
-        if not AudioProcessor.is_supported(self.audio_path):
-            raise AudioFormatError(str(self.audio_path), self.audio_path.suffix)
+        AudioProcessor().validate_audio_file(self.audio_path)
 
     def _run_transcription(self) -> None:
         """Exécute la transcription proprement dite."""
@@ -167,6 +165,7 @@ class DiarizationWorker(QObject):
         """Valide le fichier d'entrée."""
         if not self.audio_path.exists():
             raise AudioFileNotFoundError(str(self.audio_path))
+        AudioProcessor().validate_audio_file(self.audio_path)
 
     def _run_diarization(self) -> None:
         """Exécute la diarization."""
