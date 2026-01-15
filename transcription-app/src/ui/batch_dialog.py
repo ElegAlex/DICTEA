@@ -108,11 +108,6 @@ class BatchDialog(QDialog):
         self.chk_diarization.setChecked(True)
         layout.addWidget(self.chk_diarization)
 
-        layout.addWidget(QLabel("Mode:"))
-        self.combo_diarization = QComboBox()
-        self.combo_diarization.addItems(["Qualité", "Rapide"])
-        layout.addWidget(self.combo_diarization)
-
         layout.addWidget(QLabel("Max locuteurs:"))
         self.spin_speakers = QSpinBox()
         self.spin_speakers.setRange(0, 20)
@@ -257,7 +252,6 @@ class BatchDialog(QDialog):
 
     def _on_diarization_toggled(self, checked: bool) -> None:
         """Active/désactive les options de diarization."""
-        self.combo_diarization.setEnabled(checked)
         self.spin_speakers.setEnabled(checked)
 
     def _on_select_output_dir(self) -> None:
@@ -294,7 +288,6 @@ class BatchDialog(QDialog):
         options = {
             "language": language if language != "auto" else None,
             "use_diarization": self.chk_diarization.isChecked(),
-            "diarization_mode": "quality" if self.combo_diarization.currentIndex() == 0 else "fast",
             "max_speakers": self.spin_speakers.value(),
             "output_dir": getattr(self, "_output_dir", None),
             "output_format": format_map.get(self.combo_format.currentText(), "txt"),

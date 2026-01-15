@@ -72,7 +72,6 @@ class BatchOptions:
     """Options pour le batch processing."""
     language: Optional[str] = None
     use_diarization: bool = True
-    diarization_mode: str = "quality"
     min_speakers: int = 0
     max_speakers: int = 0
     output_dir: Optional[Path] = None
@@ -209,7 +208,6 @@ class BatchProcessor:
 
         # Diarization si demandée
         if options.use_diarization and self.diarizer:
-            self.diarizer.mode = options.diarization_mode
             diarization_result = self.diarizer.diarize(
                 path,
                 min_speakers=options.min_speakers if options.min_speakers > 0 else None,

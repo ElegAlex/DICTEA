@@ -370,7 +370,6 @@ class BatchWorker(QObject):
             options = BatchOptions(
                 language=self.options.get("language"),
                 use_diarization=self.options.get("use_diarization", True),
-                diarization_mode=self.options.get("diarization_mode", "quality"),
                 min_speakers=self.options.get("min_speakers", 0),
                 max_speakers=self.options.get("max_speakers", 0),
                 output_dir=self.options.get("output_dir"),

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=DICTEA
+GenericName=Audio Transcription
+Comment=Transcription audio offline avec identification des locuteurs
+Exec=dictea %F
+Icon=dictea
+Categories=AudioVideo;Audio;Utility;
+Terminal=false
+StartupNotify=true
+MimeType=audio/wav;audio/mp3;audio/mpeg;audio/ogg;audio/flac;audio/x-wav;
+Keywords=transcription;audio;speech;diarization;whisper;

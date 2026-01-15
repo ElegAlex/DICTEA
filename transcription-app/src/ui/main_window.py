@@ -118,16 +118,6 @@ class MainWindow(QMainWindow):
 
         layout.addSpacing(20)
 
-        # Mode diarization
-        layout.addWidget(QLabel("Diarization:"))
-        self.combo_diarization = QComboBox()
-        self.combo_diarization.addItems([
-            "Qualité (Pyannote - lent)", "Rapide (SpeechBrain)"
-        ])
-        layout.addWidget(self.combo_diarization)
-
-        layout.addSpacing(20)
-
         # Nombre de locuteurs
         layout.addWidget(QLabel("Locuteurs:"))
         self.spin_speakers = QSpinBox()
@@ -389,7 +379,6 @@ class MainWindow(QMainWindow):
         return {
             "language": language if language != "auto" else None,
             "use_diarization": self.chk_diarization.isChecked(),
-            "diarization_mode": "quality" if self.combo_diarization.currentIndex() == 0 else "fast",
             "max_speakers": self.spin_speakers.value(),
         }
 
@@ -403,8 +392,6 @@ class MainWindow(QMainWindow):
 
     def _create_and_start_worker(self, options: dict) -> None:
         """Crée et démarre le worker de transcription."""
-        self.diarizer.mode = options["diarization_mode"]
-
         if options["use_diarization"]:
             worker = self._create_full_pipeline_worker(options)
         else:
@@ -499,7 +486,6 @@ class MainWindow(QMainWindow):
 
     def _on_diarization_toggled(self, checked: bool) -> None:
         """Active/désactive les options de diarization."""
-        self.combo_diarization.setEnabled(checked)
         self.spin_speakers.setEnabled(checked)
 
     # =========================================================================

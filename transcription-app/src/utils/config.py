@@ -20,7 +20,6 @@ class TranscriptionConfig:
 
 @dataclass
 class DiarizationConfig:
-    mode: str = "quality"  # "quality" (Pyannote) ou "fast" (SpeechBrain)
     min_speakers: int = 0
     max_speakers: int = 0
 
@@ -110,7 +109,6 @@ class AppConfig:
                 "beam_size": self.transcription.beam_size,
             },
             "diarization": {
-                "mode": self.diarization.mode,
                 "min_speakers": self.diarization.min_speakers,
                 "max_speakers": self.diarization.max_speakers,
             },

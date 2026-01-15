@@ -414,7 +414,77 @@ Exceptions Hierarchy (NEW)
 - [ ] Export batch en CSV de statistiques
 - [ ] Amélioration UX: thèmes, raccourcis clavier
 - [ ] Support multi-langue UI (i18n)
-- [ ] Packaging avec PyInstaller/Nuitka
+- [x] Packaging avec PyInstaller/Nuitka
+
+---
+
+## 2026-01-14 - Session 5 : Packaging Multi-Plateforme
+
+### Contexte
+- Script de build existant supportait uniquement Windows
+- Besoin de créer des builds pour Windows (.exe) et Linux (AppImage)
+
+### Réalisé
+
+#### Script de build multi-plateforme
+- [x] **scripts/build.py** (UPDATED ~475 lignes)
+  - Auto-détection de la plateforme
+  - Support Windows: PyInstaller (dev) + Nuitka (release)
+  - Support Linux: PyInstaller + AppImage
+  - Téléchargement automatique de `appimagetool`
+  - Création d'icône placeholder avec PIL si disponible
+  - Vérification des dépendances avant build
+  - Affichage de la taille finale des builds
+
+#### Configuration AppImage Linux
+- [x] **resources/dictea.desktop** (NEW)
+  - Fichier .desktop standard FreeDesktop
+  - Support des types MIME audio
+  - Catégories et mots-clés appropriés
+
+### Fichiers créés/modifiés
+```
+transcription-app/
+├── scripts/
+│   └── build.py              # UPDATED - Multi-plateforme
+└── resources/
+    └── dictea.desktop        # NEW - Fichier desktop Linux
+```
+
+### Usage du script de build
+
+```bash
+# Installer les dépendances de build
+pip install pyinstaller pillow
+
+# Build automatique (détecte la plateforme)
+python scripts/build.py
+
+# Build Linux AppImage
+python scripts/build.py linux
+
+# Build Windows .exe (sur Windows uniquement)
+python scripts/build.py windows
+
+# Build release optimisé avec Nuitka
+python scripts/build.py --release
+
+# Nettoyer les fichiers de build
+python scripts/build.py --clean
+```
+
+### Output attendu
+| Plateforme | Mode | Output |
+|------------|------|--------|
+| Linux | dev | `dist/DICTEA-1.0.0-x86_64.AppImage` |
+| Windows | dev | `dist/DICTEA/DICTEA.exe` + DLLs |
+| Windows | release | `dist/DICTEA.exe` (single file) |
+
+### Prochaines étapes
+- [ ] Ajouter une vraie icône (resources/icon.png, resources/icon.ico)
+- [ ] Tester les builds sur machines propres
+- [ ] Ajouter script d'installeur Windows (Inno Setup)
+- [ ] GitHub Actions pour builds automatiques
 
 ---
 

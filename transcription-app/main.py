@@ -15,6 +15,18 @@ Configuration cible: Intel i7 / 16 Go RAM / CPU-only
 """
 import sys
 import os
+
+# Désactiver les compilateurs JIT pour compatibilité PyInstaller/AppImage
+# (évite les erreurs "Can't get source for ..." et "could not get source code")
+os.environ["PYTORCH_JIT"] = "0"
+os.environ["TRITON_CACHE_DIR"] = "/tmp/triton_cache"
+os.environ["TRITON_OFFLINE_MODE"] = "1"
+
+# Empêcher l'import de triton si non nécessaire
+sys.modules["triton"] = None
+sys.modules["triton.language"] = None
+sys.modules["triton.runtime"] = None
+sys.modules["triton.runtime.jit"] = None
 import logging
 import multiprocessing
 from pathlib import Path

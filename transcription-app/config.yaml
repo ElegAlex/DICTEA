@@ -30,12 +30,11 @@ transcription:
 
 # --- Diarization (identification locuteurs) ---
 diarization:
-  # Mode: "quality" (Pyannote) ou "fast" (SpeechBrain)
-  mode: "quality"
-  
+  # Utilise NVIDIA NeMo Sortformer - 100% offline
+
   # Nombre minimum de locuteurs attendus (0 = auto)
   min_speakers: 0
-  
+
   # Nombre maximum de locuteurs attendus (0 = auto)
   max_speakers: 0
 
