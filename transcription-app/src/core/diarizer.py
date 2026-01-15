@@ -75,7 +75,8 @@ class Diarizer:
 
     @mode.setter
     def mode(self, value: str) -> None:
-        # On garde le setter pour compatibilité mais on ignore la valeur
+        # Setter conservé pour compatibilité future; mode fixe sur NeMo Sortformer.
+        # La valeur est ignorée tant que l'application reste 100% offline avec NeMo.
         pass
 
     def load(
