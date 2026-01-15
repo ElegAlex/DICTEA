@@ -1,7 +1,7 @@
 """Modules core: transcription, diarization, audio."""
-from .transcriber import Transcriber, TranscriptionResult, TranscriptionSegment
+from .audio_processor import AudioProcessor, AudioRecorder
 from .diarizer import Diarizer, DiarizationResult, assign_speakers_to_transcription
-from .audio_processor import AudioRecorder, AudioProcessor
+from .transcriber import Transcriber, TranscriptionResult, TranscriptionSegment
 
 __all__ = [
     "Transcriber", "TranscriptionResult", "TranscriptionSegment",
