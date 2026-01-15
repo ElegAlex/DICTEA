@@ -100,8 +100,8 @@ class Diarizer:
     ) -> None:
         """Charge le modèle NeMo depuis les fichiers locaux."""
         try:
-            from nemo.collections.asr.models import SortformerEncLabelModel
             import torch
+            from nemo.collections.asr.models import SortformerEncLabelModel
 
             if progress_callback:
                 progress_callback("Chargement Sortformer...", 30.0)
@@ -171,6 +171,7 @@ class Diarizer:
     ) -> DiarizationResult:
         """Diarization avec NeMo Sortformer."""
         import tempfile
+
         from pydub import AudioSegment
 
         if progress_callback:

@@ -226,9 +226,7 @@ class BatchProcessor:
 
         if options.output_format in ("txt", "both") and (output_dir / f"{base_name}.txt").exists():
             return True
-        if options.output_format in ("srt", "both") and (output_dir / f"{base_name}.srt").exists():
-            return True
-        return False
+        return options.output_format in ("srt", "both") and (output_dir / f"{base_name}.srt").exists()
 
     def _save_result(self, item: BatchItem, options: BatchOptions) -> None:
         """Sauvegarde le résultat d'un item."""

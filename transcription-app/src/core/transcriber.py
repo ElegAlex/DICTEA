@@ -3,16 +3,15 @@ Module de transcription audio avec faster-whisper.
 Optimisé pour CPU Intel avec quantification int8.
 """
 import gc
-import os
 import logging
-from pathlib import Path
-from typing import Iterator, Optional, List, Callable
+import os
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
+from pathlib import Path
 
 from faster_whisper import WhisperModel
-from faster_whisper.transcribe import Segment
 
-from ..utils.config import get_config, TranscriptionConfig
+from ..utils.config import TranscriptionConfig, get_config
 from ..utils.model_manager import ModelManager
 
 logger = logging.getLogger(__name__)
@@ -24,15 +23,15 @@ class TranscriptionSegment:
     start: float
     end: float
     text: str
-    words: Optional[List[dict]] = None
-    speaker: Optional[str] = None
+    words: list[dict] | None = None
+    speaker: str | None = None
     confidence: float = 0.0
 
 
 @dataclass
 class TranscriptionResult:
     """Résultat complet d'une transcription."""
-    segments: List[TranscriptionSegment]
+    segments: list[TranscriptionSegment]
     language: str
     language_probability: float
     duration: float
@@ -88,12 +87,12 @@ class Transcriber:
     
     def __init__(
         self,
-        model_name: Optional[str] = None,
-        config: Optional[TranscriptionConfig] = None,
+        model_name: str | None = None,
+        config: TranscriptionConfig | None = None,
     ):
         self.config = config or get_config().transcription
         self.model_name = model_name or self.config.model
-        self.model: Optional[WhisperModel] = None
+        self.model: WhisperModel | None = None
         self.model_manager = ModelManager()
         
         # Optimisations CPU Intel
@@ -114,7 +113,7 @@ class Transcriber:
     
     def load_model(
         self,
-        progress_callback: Optional[Callable[[str, float], None]] = None,
+        progress_callback: Callable[[str, float], None] | None = None,
     ) -> None:
         """
         Charge le modèle Whisper en mémoire.
@@ -158,8 +157,8 @@ class Transcriber:
     def transcribe(
         self,
         audio_path: Path,
-        language: Optional[str] = None,
-        progress_callback: Optional[Callable[[int, str], None]] = None,
+        language: str | None = None,
+        progress_callback: Callable[[int, str], None] | None = None,
     ) -> TranscriptionResult:
         """
         Transcrit un fichier audio.
@@ -223,7 +222,7 @@ class Transcriber:
     def transcribe_stream(
         self,
         audio_path: Path,
-        language: Optional[str] = None,
+        language: str | None = None,
     ) -> Iterator[TranscriptionSegment]:
         """
         Transcrit en mode streaming (yield segment par segment).
