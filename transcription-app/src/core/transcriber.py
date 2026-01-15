@@ -35,7 +35,7 @@ class TranscriptionResult:
     language: str
     language_probability: float
     duration: float
-    
+
     def to_text(self, include_timestamps: bool = False, include_speakers: bool = True) -> str:
         """Convertit en texte formaté."""
         lines = []
@@ -47,7 +47,7 @@ class TranscriptionResult:
                 prefix += f"[{_format_time(seg.start)} - {_format_time(seg.end)}] "
             lines.append(f"{prefix}{seg.text.strip()}")
         return "\n".join(lines)
-    
+
     def to_srt(self) -> str:
         """Export au format SRT (sous-titres)."""
         lines = []
@@ -78,13 +78,13 @@ def _format_srt_time(seconds: float) -> str:
 class Transcriber:
     """
     Classe de transcription audio avec faster-whisper.
-    
+
     Optimisée pour:
     - CPU Intel i7 avec instructions AVX2
     - 16 Go RAM avec modèle medium int8
     - Traitement par chunks pour fichiers longs
     """
-    
+
     def __init__(
         self,
         model_name: str | None = None,
@@ -94,23 +94,23 @@ class Transcriber:
         self.model_name = model_name or self.config.model
         self.model: WhisperModel | None = None
         self.model_manager = ModelManager()
-        
+
         # Optimisations CPU Intel
         self._setup_cpu_optimizations()
-    
+
     def _setup_cpu_optimizations(self) -> None:
         """Configure les optimisations CPU."""
         cpu_threads = self.config.cpu_threads
         if cpu_threads == 0:
             # Auto-detect: utiliser les cores physiques (pas hyperthreading)
             cpu_threads = os.cpu_count() // 2 or 4
-        
+
         os.environ["OMP_NUM_THREADS"] = str(cpu_threads)
         os.environ["MKL_NUM_THREADS"] = str(cpu_threads)
         os.environ["OMP_WAIT_POLICY"] = "PASSIVE"
-        
+
         logger.info(f"CPU threads configurés: {cpu_threads}")
-    
+
     def load_model(
         self,
         progress_callback: Callable[[str, float], None] | None = None,
@@ -122,30 +122,30 @@ class Transcriber:
         if self.model is not None:
             logger.info("Modèle déjà chargé")
             return
-        
+
         # Télécharger si nécessaire
         model_path = self.model_manager.download_whisper_model(
             self.model_name,
             progress_callback=progress_callback,
         )
-        
+
         if progress_callback:
             progress_callback("Chargement du modèle en mémoire...", 50.0)
-        
+
         logger.info(f"Chargement du modèle {self.model_name} ({self.config.compute_type})...")
-        
+
         self.model = WhisperModel(
             str(model_path),
             device="cpu",
             compute_type=self.config.compute_type,
             cpu_threads=self.config.cpu_threads or (os.cpu_count() // 2),
         )
-        
+
         if progress_callback:
             progress_callback("Modèle prêt", 100.0)
-        
+
         logger.info("Modèle chargé avec succès")
-    
+
     def unload_model(self) -> None:
         """Décharge le modèle pour libérer la mémoire."""
         if self.model is not None:
@@ -153,7 +153,7 @@ class Transcriber:
             self.model = None
             gc.collect()
             logger.info("Modèle déchargé")
-    
+
     def transcribe(
         self,
         audio_path: Path,
@@ -162,24 +162,24 @@ class Transcriber:
     ) -> TranscriptionResult:
         """
         Transcrit un fichier audio.
-        
+
         Args:
             audio_path: Chemin vers le fichier audio
             language: Code langue (fr, en, auto...) ou None pour config
             progress_callback: Callback (segment_index, texte_segment)
-        
+
         Returns:
             TranscriptionResult avec tous les segments
         """
         if self.model is None:
             self.load_model()
-        
+
         language = language or self.config.language
         if language == "auto":
             language = None
-        
+
         logger.info(f"Transcription de {audio_path} (langue: {language or 'auto'})...")
-        
+
         segments_iter, info = self.model.transcribe(
             str(audio_path),
             language=language,
@@ -187,7 +187,7 @@ class Transcriber:
             vad_filter=self.config.vad_filter,
             word_timestamps=True,  # Requis pour alignement diarization
         )
-        
+
         segments = []
         for i, segment in enumerate(segments_iter):
             seg = TranscriptionSegment(
@@ -201,24 +201,24 @@ class Transcriber:
                 confidence=segment.avg_logprob if hasattr(segment, 'avg_logprob') else 0.0,
             )
             segments.append(seg)
-            
+
             if progress_callback:
                 progress_callback(i, segment.text[:80])
-        
+
         result = TranscriptionResult(
             segments=segments,
             language=info.language,
             language_probability=info.language_probability,
             duration=info.duration,
         )
-        
+
         logger.info(
             f"Transcription terminée: {len(segments)} segments, "
             f"durée {result.duration:.1f}s, langue {result.language}"
         )
-        
+
         return result
-    
+
     def transcribe_stream(
         self,
         audio_path: Path,
@@ -230,11 +230,11 @@ class Transcriber:
         """
         if self.model is None:
             self.load_model()
-        
+
         language = language or self.config.language
         if language == "auto":
             language = None
-        
+
         segments_iter, info = self.model.transcribe(
             str(audio_path),
             language=language,
@@ -242,7 +242,7 @@ class Transcriber:
             vad_filter=self.config.vad_filter,
             word_timestamps=True,
         )
-        
+
         for segment in segments_iter:
             yield TranscriptionSegment(
                 start=segment.start,
