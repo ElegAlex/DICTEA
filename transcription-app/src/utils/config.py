@@ -2,10 +2,10 @@
 Gestion de la configuration de l'application.
 """
 import os
-import yaml
-from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Optional
+from pathlib import Path
+
+import yaml
 
 
 @dataclass
@@ -29,7 +29,7 @@ class AudioConfig:
     sample_rate: int = 16000
     channels: int = 1
     export_format: str = "wav"
-    input_device: Optional[int] = None
+    input_device: int | None = None
 
 
 @dataclass
@@ -52,9 +52,9 @@ class AppConfig:
     audio: AudioConfig = field(default_factory=AudioConfig)
     paths: PathsConfig = field(default_factory=PathsConfig)
     performance: PerformanceConfig = field(default_factory=PerformanceConfig)
-    
+
     @classmethod
-    def load(cls, config_path: Optional[Path] = None) -> "AppConfig":
+    def load(cls, config_path: Path | None = None) -> "AppConfig":
         """Charge la configuration depuis un fichier YAML."""
         if config_path is None:
             # Chercher config.yaml à côté de l'exécutable ou dans le dossier courant
@@ -67,13 +67,13 @@ class AppConfig:
                 if p.exists():
                     config_path = p
                     break
-        
+
         config = cls()
-        
+
         if config_path and config_path.exists():
             with open(config_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
-            
+
             if "transcription" in data:
                 config.transcription = TranscriptionConfig(**data["transcription"])
             if "diarization" in data:
@@ -89,14 +89,14 @@ class AppConfig:
                 )
             if "performance" in data:
                 config.performance = PerformanceConfig(**data["performance"])
-        
+
         # Créer les dossiers nécessaires
         config.paths.models.mkdir(parents=True, exist_ok=True)
         config.paths.output.mkdir(parents=True, exist_ok=True)
         config.paths.temp.mkdir(parents=True, exist_ok=True)
-        
+
         return config
-    
+
     def save(self, config_path: Path) -> None:
         """Sauvegarde la configuration dans un fichier YAML."""
         data = {
@@ -128,14 +128,14 @@ class AppConfig:
                 "aggressive_gc": self.performance.aggressive_gc,
             },
         }
-        
+
         config_path.parent.mkdir(parents=True, exist_ok=True)
         with open(config_path, "w", encoding="utf-8") as f:
             yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
 
 
 # Singleton global
-_config: Optional[AppConfig] = None
+_config: AppConfig | None = None
 
 
 def get_config() -> AppConfig:
@@ -146,7 +146,7 @@ def get_config() -> AppConfig:
     return _config
 
 
-def reload_config(config_path: Optional[Path] = None) -> AppConfig:
+def reload_config(config_path: Path | None = None) -> AppConfig:
     """Recharge la configuration depuis le fichier."""
     global _config
     _config = AppConfig.load(config_path)

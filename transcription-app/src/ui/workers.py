@@ -6,22 +6,21 @@ import gc
 import logging
 import traceback
 from pathlib import Path
-from typing import Optional
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from ..core.transcriber import Transcriber, TranscriptionResult
-from ..core.diarizer import Diarizer, DiarizationResult, assign_speakers_to_transcription
 from ..core.audio_processor import AudioProcessor
+from ..core.diarizer import DiarizationResult, Diarizer, assign_speakers_to_transcription
 from ..core.exceptions import (
-    DICTEAError,
     AudioFileNotFoundError,
     AudioFormatError,
-    TranscriptionCancelledError,
-    ModelLoadError,
+    DICTEAError,
     HuggingFaceTokenError,
+    ModelLoadError,
+    TranscriptionCancelledError,
     get_user_friendly_message,
 )
+from ..core.transcriber import Transcriber, TranscriptionResult
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ class TranscriptionWorker(QObject):
         self,
         audio_path: Path,
         transcriber: Transcriber,
-        language: Optional[str] = None,
+        language: str | None = None,
     ):
         super().__init__()
         self.audio_path = audio_path
@@ -210,7 +209,7 @@ class FullPipelineWorker(QObject):
         audio_path: Path,
         transcriber: Transcriber,
         diarizer: Diarizer,
-        language: Optional[str] = None,
+        language: str | None = None,
         min_speakers: int = 0,
         max_speakers: int = 0,
     ):
@@ -345,7 +344,7 @@ class BatchWorker(QObject):
         self,
         files: list,
         transcriber: Transcriber,
-        diarizer: Optional[Diarizer],
+        diarizer: Diarizer | None,
         options: dict,
     ):
         super().__init__()
@@ -363,7 +362,7 @@ class BatchWorker(QObject):
 
     def run(self) -> None:
         try:
-            from ..core.batch_processor import BatchProcessor, BatchOptions
+            from ..core.batch_processor import BatchOptions, BatchProcessor
 
             self.started.emit()
 

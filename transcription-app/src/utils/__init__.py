@@ -1,5 +1,5 @@
 """Utilitaires: configuration, gestion des modèles."""
-from .config import get_config, reload_config, AppConfig
+from .config import AppConfig, get_config, reload_config
 from .model_manager import ModelManager
 
-__all__ = ["get_config", "reload_config", "AppConfig", "ModelManager"]
+__all__ = ["AppConfig", "ModelManager", "get_config", "reload_config"]
