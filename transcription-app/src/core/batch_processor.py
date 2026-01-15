@@ -3,16 +3,16 @@ Module de traitement par lots (batch processing).
 Permet de transcrire plusieurs fichiers audio en séquence.
 """
 import logging
-from pathlib import Path
-from typing import List, Optional, Callable
-from dataclasses import dataclass, field
-from enum import Enum
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+from pathlib import Path
 
-from .transcriber import Transcriber, TranscriptionResult
-from .diarizer import Diarizer, assign_speakers_to_transcription
 from .audio_processor import AudioProcessor
+from .diarizer import Diarizer, assign_speakers_to_transcription
 from .exceptions import AudioFileNotFoundError, AudioFormatError
+from .transcriber import Transcriber, TranscriptionResult
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +31,8 @@ class BatchItem:
     """Représente un fichier dans le batch."""
     path: Path
     status: BatchItemStatus = BatchItemStatus.PENDING
-    result: Optional[TranscriptionResult] = None
-    error_message: Optional[str] = None
+    result: TranscriptionResult | None = None
+    error_message: str | None = None
     processing_time: float = 0.0
 
     @property
@@ -43,10 +43,10 @@ class BatchItem:
 @dataclass
 class BatchResult:
     """Résultat global du batch processing."""
-    items: List[BatchItem]
+    items: list[BatchItem]
     total_time: float = 0.0
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
 
     @property
     def total_count(self) -> int:
@@ -70,11 +70,11 @@ class BatchResult:
 @dataclass
 class BatchOptions:
     """Options pour le batch processing."""
-    language: Optional[str] = None
+    language: str | None = None
     use_diarization: bool = True
     min_speakers: int = 0
     max_speakers: int = 0
-    output_dir: Optional[Path] = None
+    output_dir: Path | None = None
     output_format: str = "txt"  # txt, srt, both
     include_timestamps: bool = True
     include_speakers: bool = True
@@ -93,7 +93,7 @@ class BatchProcessor:
     def __init__(
         self,
         transcriber: Transcriber,
-        diarizer: Optional[Diarizer] = None,
+        diarizer: Diarizer | None = None,
     ):
         self.transcriber = transcriber
         self.diarizer = diarizer
@@ -106,9 +106,9 @@ class BatchProcessor:
 
     def process(
         self,
-        files: List[Path],
+        files: list[Path],
         options: BatchOptions,
-        progress_callback: Optional[Callable[[int, int, str, float], None]] = None,
+        progress_callback: Callable[[int, int, str, float], None] | None = None,
     ) -> BatchResult:
         """
         Traite une liste de fichiers audio.
@@ -149,7 +149,7 @@ class BatchProcessor:
         self,
         item: BatchItem,
         options: BatchOptions,
-        progress_callback: Optional[Callable],
+        progress_callback: Callable | None,
         current_index: int,
         total: int,
     ) -> None:
@@ -191,7 +191,7 @@ class BatchProcessor:
         self,
         path: Path,
         options: BatchOptions,
-        progress_callback: Optional[Callable],
+        progress_callback: Callable | None,
         current_index: int,
         total: int,
     ) -> TranscriptionResult:
@@ -255,7 +255,7 @@ class BatchProcessor:
             srt_path.write_text(item.result.to_srt(), encoding="utf-8")
             logger.info(f"Sauvegardé: {srt_path}")
 
-    def _mark_remaining_as_skipped(self, items: List[BatchItem], start_index: int) -> None:
+    def _mark_remaining_as_skipped(self, items: list[BatchItem], start_index: int) -> None:
         """Marque les éléments restants comme ignorés."""
         for i in range(start_index, len(items)):
             if items[i].status == BatchItemStatus.PENDING:
@@ -265,7 +265,7 @@ class BatchProcessor:
 def get_audio_files_from_directory(
     directory: Path,
     recursive: bool = False,
-) -> List[Path]:
+) -> list[Path]:
     """
     Récupère tous les fichiers audio d'un répertoire.
 
