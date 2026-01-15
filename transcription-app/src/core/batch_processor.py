@@ -224,12 +224,10 @@ class BatchProcessor:
         output_dir = options.output_dir or input_path.parent
         base_name = input_path.stem
 
-        if options.output_format in ("txt", "both"):
-            if (output_dir / f"{base_name}.txt").exists():
-                return True
-        if options.output_format in ("srt", "both"):
-            if (output_dir / f"{base_name}.srt").exists():
-                return True
+        if options.output_format in ("txt", "both") and (output_dir / f"{base_name}.txt").exists():
+            return True
+        if options.output_format in ("srt", "both") and (output_dir / f"{base_name}.srt").exists():
+            return True
         return False
 
     def _save_result(self, item: BatchItem, options: BatchOptions) -> None:

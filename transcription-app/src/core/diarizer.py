@@ -4,12 +4,11 @@ Utilise NVIDIA NeMo Sortformer - 100% offline, sans authentification.
 """
 import gc
 import logging
-from pathlib import Path
-from typing import Optional, List, Callable, Dict
-
+from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
-from ..utils.config import get_config, DiarizationConfig
+from ..utils.config import DiarizationConfig, get_config
 from .transcriber import TranscriptionResult
 
 logger = logging.getLogger(__name__)
@@ -29,19 +28,19 @@ class SpeakerSegment:
 @dataclass
 class DiarizationResult:
     """Résultat de la diarization."""
-    segments: List[SpeakerSegment]
+    segments: list[SpeakerSegment]
     num_speakers: int
 
-    def get_speaker_at(self, time: float) -> Optional[str]:
+    def get_speaker_at(self, time: float) -> str | None:
         """Retourne le locuteur à un instant donné."""
         for seg in self.segments:
             if seg.start <= time <= seg.end:
                 return seg.speaker
         return None
 
-    def get_speaker_for_range(self, start: float, end: float) -> Optional[str]:
+    def get_speaker_for_range(self, start: float, end: float) -> str | None:
         """Retourne le locuteur majoritaire sur une plage de temps."""
-        overlaps: Dict[str, float] = {}
+        overlaps: dict[str, float] = {}
 
         for seg in self.segments:
             overlap_start = max(start, seg.start)
@@ -65,7 +64,7 @@ class Diarizer:
     Supporte jusqu'à 4 locuteurs.
     """
 
-    def __init__(self, config: Optional[DiarizationConfig] = None):
+    def __init__(self, config: DiarizationConfig | None = None):
         self.config = config or get_config().diarization
         self.model = None
         self._mode = "nemo"  # Mode unique: NeMo
@@ -81,7 +80,7 @@ class Diarizer:
 
     def load(
         self,
-        progress_callback: Optional[Callable[[str, float], None]] = None,
+        progress_callback: Callable[[str, float], None] | None = None,
     ) -> None:
         """Charge le modèle NeMo Sortformer."""
         if self.model is not None:
@@ -97,7 +96,7 @@ class Diarizer:
 
     def _load_nemo(
         self,
-        progress_callback: Optional[Callable[[str, float], None]] = None,
+        progress_callback: Callable[[str, float], None] | None = None,
     ) -> None:
         """Charge le modèle NeMo depuis les fichiers locaux."""
         try:
@@ -139,9 +138,9 @@ class Diarizer:
     def diarize(
         self,
         audio_path: Path,
-        min_speakers: Optional[int] = None,
-        max_speakers: Optional[int] = None,
-        progress_callback: Optional[Callable[[str, float], None]] = None,
+        min_speakers: int | None = None,
+        max_speakers: int | None = None,
+        progress_callback: Callable[[str, float], None] | None = None,
     ) -> DiarizationResult:
         """
         Effectue la diarization d'un fichier audio.
@@ -168,7 +167,7 @@ class Diarizer:
     def _diarize_nemo(
         self,
         audio_path: Path,
-        progress_callback: Optional[Callable[[str, float], None]],
+        progress_callback: Callable[[str, float], None] | None,
     ) -> DiarizationResult:
         """Diarization avec NeMo Sortformer."""
         import tempfile
