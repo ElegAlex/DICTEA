@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:  # Permet de lancer manuellement
 
+permissions:
+  contents: write  # Required for creating releases
+
 jobs:
   build-windows:
     runs-on: windows-latest
