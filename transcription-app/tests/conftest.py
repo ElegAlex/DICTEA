@@ -44,7 +44,6 @@ transcription:
   beam_size: 5
 
 diarization:
-  mode: "fast"
   min_speakers: 0
   max_speakers: 0
 
@@ -91,7 +90,6 @@ def mock_config(temp_dir):
             beam_size=5,
         ),
         diarization=DiarizationConfig(
-            mode="fast",
             min_speakers=0,
             max_speakers=0,
         ),

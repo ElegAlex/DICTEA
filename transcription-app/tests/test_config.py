@@ -56,15 +56,13 @@ class TestDiarizationConfig:
         """Vérifie les valeurs par défaut."""
         config = DiarizationConfig()
 
-        assert config.mode == "quality"
         assert config.min_speakers == 0
         assert config.max_speakers == 0
 
-    def test_fast_mode(self):
-        """Vérifie la configuration mode rapide."""
-        config = DiarizationConfig(mode="fast", min_speakers=2, max_speakers=5)
+    def test_custom_speakers(self):
+        """Vérifie la configuration avec nombre de locuteurs personnalisé."""
+        config = DiarizationConfig(min_speakers=2, max_speakers=5)
 
-        assert config.mode == "fast"
         assert config.min_speakers == 2
         assert config.max_speakers == 5
 
@@ -141,7 +139,7 @@ class TestAppConfig:
 
         assert config.transcription.model == "tiny"
         assert config.transcription.cpu_threads == 2
-        assert config.diarization.mode == "fast"
+        assert config.diarization.min_speakers == 0
         assert config.audio.sample_rate == 16000
 
     def test_load_creates_directories(self, temp_config_file, temp_dir):
