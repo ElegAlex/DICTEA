@@ -102,12 +102,6 @@ jobs:
           name: DICTEA-Windows
           path: windows-build
 
-      - name: Download Linux artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: DICTEA-Linux-AppImage
-          path: linux-build
-
       - name: Zip Windows build
         run: |
           cd windows-build
@@ -118,7 +112,17 @@ jobs:
         with:
           files: |
             DICTEA-Windows.zip
-            linux-build/*.AppImage
+          body: |
+            ## DICTEA v1.0.0
+
+            ### Téléchargements
+            - **Windows**: `DICTEA-Windows.zip` (ci-dessous)
+            - **Linux**: L'AppImage (~4GB) est disponible dans les [artifacts du build](https://github.com/ElegAlex/DICTEA/actions/runs/${{ github.run_id }}) pendant 30 jours
+
+            ### Notes
+            - Application 100% offline
+            - Transcription avec Whisper
+            - Diarisation avec NeMo Sortformer
           draft: false
           prerelease: false
         env:
