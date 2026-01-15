@@ -2,26 +2,37 @@
 Fenêtre principale de l'application de transcription.
 """
 import logging
-from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from pathlib import Path
 
-from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel, QTextEdit, QProgressBar,
-    QFileDialog, QComboBox, QSpinBox, QGroupBox,
-    QStatusBar, QMessageBox, QCheckBox, QFrame,
-)
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QFileDialog,
+    QFrame,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSpinBox,
+    QStatusBar,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
-from ..core.transcriber import Transcriber, TranscriptionResult
+from ..core.audio_processor import AudioProcessor, AudioRecorder
 from ..core.diarizer import Diarizer
-from ..core.audio_processor import AudioRecorder, AudioProcessor
+from ..core.transcriber import Transcriber, TranscriptionResult
 from ..utils.config import get_config
-from .workers import TranscriptionWorker, FullPipelineWorker, WorkerThread
-from .batch_dialog import BatchDialog
 from .audio_player import AudioPlayerWidget
+from .batch_dialog import BatchDialog
+from .workers import FullPipelineWorker, TranscriptionWorker, WorkerThread
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +49,10 @@ class MainWindow(QMainWindow):
         self.recorder = AudioRecorder()
         self.processor = AudioProcessor()
 
-        self._current_worker: Optional[WorkerThread] = None
-        self._recording_timer: Optional[QTimer] = None
-        self._current_result: Optional[TranscriptionResult] = None
-        self._audio_path: Optional[Path] = None
+        self._current_worker: WorkerThread | None = None
+        self._recording_timer: QTimer | None = None
+        self._current_result: TranscriptionResult | None = None
+        self._audio_path: Path | None = None
         self._recording_duration: float = 0.0
 
         self._setup_ui()

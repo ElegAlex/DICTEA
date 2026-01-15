@@ -3,20 +3,30 @@ Dialogue pour le traitement par lots (batch processing).
 """
 import logging
 from pathlib import Path
-from typing import List, Optional
 
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGroupBox,
-    QPushButton, QLabel, QListWidget, QListWidgetItem,
-    QProgressBar, QComboBox, QCheckBox, QSpinBox,
-    QFileDialog, QMessageBox, QAbstractItemView,
-)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSpinBox,
+    QVBoxLayout,
+)
 
-from ..core.transcriber import Transcriber
-from ..core.diarizer import Diarizer
 from ..core.batch_processor import get_audio_files_from_directory
+from ..core.diarizer import Diarizer
+from ..core.transcriber import Transcriber
 from ..utils.config import get_config
 from .workers import BatchWorker, WorkerThread
 
@@ -36,8 +46,8 @@ class BatchDialog(QDialog):
         self.transcriber = transcriber
         self.diarizer = diarizer
         self.config = get_config()
-        self._files: List[Path] = []
-        self._worker: Optional[WorkerThread] = None
+        self._files: list[Path] = []
+        self._worker: WorkerThread | None = None
 
         self._setup_ui()
         self._connect_signals()

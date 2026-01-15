@@ -3,13 +3,10 @@ Widget de lecture audio pour prévisualiser les fichiers.
 """
 import logging
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QPushButton, QSlider, QLabel,
-)
-from PySide6.QtCore import Qt, QTimer, QUrl
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSlider, QWidget
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +16,7 @@ class AudioPlayerWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._audio_path: Optional[Path] = None
+        self._audio_path: Path | None = None
         self._duration: float = 0.0
 
         self._setup_player()

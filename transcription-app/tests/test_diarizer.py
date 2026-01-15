@@ -90,7 +90,7 @@ class TestDiarizationResult:
 
 
 class TestDiarizer:
-    """Tests pour la classe Diarizer."""
+    """Tests pour la classe Diarizer (NeMo Sortformer)."""
 
     @pytest.fixture
     def mock_diarizer_deps(self, mock_config):
@@ -102,90 +102,55 @@ class TestDiarizer:
         """Vérifie l'initialisation par défaut."""
         diarizer = Diarizer()
 
-        assert diarizer.pipeline is None
-        assert diarizer.mode == "fast"  # mode de mock_config
+        assert diarizer.model is None
+        assert diarizer.mode == "nemo"
 
     def test_mode_property(self, mock_diarizer_deps):
-        """Vérifie la propriété mode."""
+        """Vérifie la propriété mode - toujours nemo."""
         diarizer = Diarizer()
 
-        assert diarizer.mode == "fast"
+        assert diarizer.mode == "nemo"
 
-    def test_mode_setter_valid(self, mock_diarizer_deps):
-        """Vérifie le setter avec valeur valide."""
+    def test_mode_setter_ignored(self, mock_diarizer_deps):
+        """Vérifie que le setter mode est ignoré (NeMo uniquement)."""
         diarizer = Diarizer()
         diarizer.mode = "quality"
 
-        assert diarizer.mode == "quality"
-
-    def test_mode_setter_invalid(self, mock_diarizer_deps):
-        """Vérifie le setter avec valeur invalide."""
-        diarizer = Diarizer()
-
-        with pytest.raises(ValueError) as excinfo:
-            diarizer.mode = "invalid"
-
-        assert "quality" in str(excinfo.value) or "fast" in str(excinfo.value)
-
-    def test_mode_change_unloads_pipeline(self, mock_diarizer_deps):
-        """Vérifie que changer de mode décharge le pipeline."""
-        diarizer = Diarizer()
-        diarizer.pipeline = MagicMock()
-
-        diarizer.mode = "quality"
-
-        assert diarizer.pipeline is None
+        # Le setter ignore la valeur, mode reste "nemo"
+        assert diarizer.mode == "nemo"
 
     def test_unload(self, mock_diarizer_deps):
-        """Vérifie le déchargement."""
+        """Vérifie le déchargement du modèle."""
         diarizer = Diarizer()
-        diarizer.pipeline = MagicMock()
-        diarizer._embedder = MagicMock()
-        diarizer._vad = MagicMock()
+        diarizer.model = MagicMock()
 
         diarizer.unload()
 
-        assert diarizer.pipeline is None
-        assert not hasattr(diarizer, "_embedder") or diarizer._embedder is None
+        assert diarizer.model is None
 
-    @patch("pyannote.audio.Pipeline")
-    def test_load_pyannote(self, mock_pipeline, mock_diarizer_deps):
-        """Vérifie le chargement de Pyannote."""
-        mock_pipeline_instance = MagicMock()
-        mock_pipeline.from_pretrained.return_value = mock_pipeline_instance
-
+    def test_load_calls_load_nemo(self, mock_diarizer_deps):
+        """Vérifie que load appelle _load_nemo."""
         diarizer = Diarizer()
-        diarizer._mode = "quality"
 
-        diarizer.load()
+        with patch.object(diarizer, "_load_nemo") as mock_load_nemo:
+            diarizer.load()
+            mock_load_nemo.assert_called_once()
 
-        mock_pipeline.from_pretrained.assert_called_once()
-        assert diarizer.pipeline is not None
+    def test_load_skips_if_already_loaded(self, mock_diarizer_deps):
+        """Vérifie que load ne recharge pas si déjà chargé."""
+        diarizer = Diarizer()
+        diarizer.model = MagicMock()
 
-    @pytest.mark.slow
-    def test_load_speechbrain_mock(self, mock_diarizer_deps):
-        """Vérifie le chargement de SpeechBrain (mocké)."""
-        pytest.importorskip("speechbrain")
-
-        with patch("speechbrain.inference.VAD") as mock_vad:
-            with patch("speechbrain.inference.SpeakerRecognition") as mock_sr:
-                mock_sr.from_hparams.return_value = MagicMock()
-                mock_vad.from_hparams.return_value = MagicMock()
-
-                diarizer = Diarizer()
-                diarizer._mode = "fast"
-
-                diarizer._load_speechbrain()
-
-                mock_sr.from_hparams.assert_called_once()
-                mock_vad.from_hparams.assert_called_once()
+        with patch.object(diarizer, "_load_nemo") as mock_load_nemo:
+            diarizer.load()
+            mock_load_nemo.assert_not_called()
 
     def test_diarize_loads_if_needed(self, mock_diarizer_deps, sample_audio_file):
-        """Vérifie que diarize charge le pipeline si nécessaire."""
+        """Vérifie que diarize charge le modèle si nécessaire."""
         diarizer = Diarizer()
 
         with patch.object(diarizer, "load") as mock_load:
-            with patch.object(diarizer, "_diarize_speechbrain") as mock_diarize:
+            with patch.object(diarizer, "_diarize_nemo") as mock_diarize:
                 mock_diarize.return_value = DiarizationResult(segments=[], num_speakers=0)
 
                 diarizer.diarize(sample_audio_file)
@@ -195,67 +160,28 @@ class TestDiarizer:
     def test_diarize_skips_load_if_loaded(self, mock_diarizer_deps, sample_audio_file):
         """Vérifie que diarize ne recharge pas si déjà chargé."""
         diarizer = Diarizer()
-        diarizer.pipeline = MagicMock()
-        diarizer._mode = "fast"
+        diarizer.model = MagicMock()
 
         with patch.object(diarizer, "load") as mock_load:
-            with patch.object(diarizer, "_diarize_speechbrain") as mock_diarize:
+            with patch.object(diarizer, "_diarize_nemo") as mock_diarize:
                 mock_diarize.return_value = DiarizationResult(segments=[], num_speakers=0)
 
                 diarizer.diarize(sample_audio_file)
 
                 mock_load.assert_not_called()
 
-    def test_diarize_converts_zero_speakers(self, mock_diarizer_deps, sample_audio_file):
-        """Vérifie la conversion de 0 en None pour auto-detection."""
+    def test_diarize_calls_diarize_nemo(self, mock_diarizer_deps, sample_audio_file):
+        """Vérifie que diarize appelle _diarize_nemo."""
         diarizer = Diarizer()
-        diarizer.pipeline = MagicMock()
-        diarizer._mode = "quality"
+        diarizer.model = MagicMock()
 
-        with patch.object(diarizer, "_diarize_pyannote") as mock_diarize:
+        with patch.object(diarizer, "_diarize_nemo") as mock_diarize:
             mock_diarize.return_value = DiarizationResult(segments=[], num_speakers=0)
 
-            diarizer.diarize(sample_audio_file, min_speakers=0, max_speakers=0)
+            result = diarizer.diarize(sample_audio_file)
 
-            call_args = mock_diarize.call_args
-            assert call_args[0][1] is None  # min_speakers
-            assert call_args[0][2] is None  # max_speakers
-
-    def test_diarize_pyannote(self, mock_diarizer_deps, sample_audio_file):
-        """Vérifie la diarization Pyannote."""
-        diarizer = Diarizer()
-        diarizer._mode = "quality"
-
-        # Mock du pipeline Pyannote
-        mock_pipeline = MagicMock()
-
-        # Créer un mock pour itertracks
-        mock_turn1 = MagicMock()
-        mock_turn1.start = 0.0
-        mock_turn1.end = 2.0
-
-        mock_turn2 = MagicMock()
-        mock_turn2.start = 2.0
-        mock_turn2.end = 4.0
-
-        mock_pipeline.return_value.itertracks.return_value = [
-            (mock_turn1, None, "SPEAKER_00"),
-            (mock_turn2, None, "SPEAKER_01"),
-        ]
-
-        mock_pipeline.return_value = MagicMock()
-        mock_pipeline.return_value.itertracks.return_value = [
-            (mock_turn1, None, "SPEAKER_00"),
-            (mock_turn2, None, "SPEAKER_01"),
-        ]
-
-        diarizer.pipeline = mock_pipeline.return_value
-
-        result = diarizer._diarize_pyannote(
-            sample_audio_file, min_speakers=None, max_speakers=None, progress_callback=None
-        )
-
-        assert isinstance(result, DiarizationResult)
+            mock_diarize.assert_called_once()
+            assert isinstance(result, DiarizationResult)
 
 
 class TestAssignSpeakersToTranscription:

@@ -1,8 +1,11 @@
 """Interface utilisateur PySide6."""
 from .main_window import MainWindow
-from .workers import TranscriptionWorker, DiarizationWorker, FullPipelineWorker, WorkerThread
+from .workers import DiarizationWorker, FullPipelineWorker, TranscriptionWorker, WorkerThread
 
 __all__ = [
+    "DiarizationWorker",
+    "FullPipelineWorker",
     "MainWindow",
-    "TranscriptionWorker", "DiarizationWorker", "FullPipelineWorker", "WorkerThread",
+    "TranscriptionWorker",
+    "WorkerThread",
 ]
