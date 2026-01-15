@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .audio_processor import AudioProcessor
 from .diarizer import Diarizer, assign_speakers_to_transcription
-from .exceptions import AudioFileNotFoundError, AudioFormatError
+from .exceptions import AudioFileNotFoundError
 from .transcriber import Transcriber, TranscriptionResult
 
 logger = logging.getLogger(__name__)
@@ -184,8 +184,7 @@ class BatchProcessor:
         """Valide un fichier avant traitement."""
         if not path.exists():
             raise AudioFileNotFoundError(str(path))
-        if not AudioProcessor.is_supported(path):
-            raise AudioFormatError(str(path), path.suffix)
+        self.audio_processor.validate_audio_file(path)
 
     def _transcribe_file(
         self,

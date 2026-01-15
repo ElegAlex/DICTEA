@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
 
 from ..core.audio_processor import AudioProcessor, AudioRecorder
 from ..core.diarizer import Diarizer
+from ..core.exceptions import DICTEAError, get_user_friendly_message
 from ..core.transcriber import Transcriber, TranscriptionResult
 from ..utils.config import get_config
 from .audio_player import AudioPlayerWidget
@@ -268,8 +269,11 @@ class MainWindow(QMainWindow):
             self.audio_player.load_audio(path)
             self.btn_transcribe.setEnabled(True)
             self.status_bar.showMessage(f"Fichier chargé: {path.name}")
+        except DICTEAError as e:
+            QMessageBox.critical(self, "Erreur", e.user_message)
+            logger.error(f"Erreur chargement audio: {e}")
         except Exception as e:
-            QMessageBox.critical(self, "Erreur", f"Impossible de charger le fichier:\n{e}")
+            QMessageBox.critical(self, "Erreur", get_user_friendly_message(e))
             logger.error(f"Erreur chargement audio: {e}")
 
     def _update_source_info_for_file(self, path: Path, info: dict) -> None:

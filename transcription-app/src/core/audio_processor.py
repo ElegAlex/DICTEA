@@ -2,7 +2,9 @@
 Module de traitement audio: enregistrement, conversion, validation.
 """
 import logging
+import os
 import queue
+import sys
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -12,8 +14,11 @@ import numpy as np
 import sounddevice as sd
 import soundfile as sf
 from pydub import AudioSegment
+from pydub.exceptions import CouldntDecodeError
+from pydub.utils import which
 
 from ..utils.config import AudioConfig, get_config
+from .exceptions import AudioCorruptedError, AudioDependencyError, AudioFormatError
 
 logger = logging.getLogger(__name__)
 
@@ -221,11 +226,82 @@ class AudioProcessor:
 
     def __init__(self, config: AudioConfig | None = None):
         self.config = config or get_config().audio
+        self._ffmpeg_checked = False
+
+    def _candidate_ffmpeg_dirs(self) -> list[Path]:
+        """Liste les dossiers potentiels contenant FFmpeg."""
+        dirs: list[Path] = []
+
+        env_dir = os.getenv("DICTEA_FFMPEG_DIR")
+        if env_dir:
+            dirs.append(Path(env_dir))
+
+        if getattr(sys, "frozen", False):
+            exe_dir = Path(sys.executable).parent
+            dirs.extend([exe_dir, exe_dir / "ffmpeg"])
+
+        app_root = Path(__file__).resolve().parents[2]
+        dirs.extend([
+            app_root,
+            app_root / "resources",
+            app_root / "resources" / "ffmpeg",
+        ])
+
+        return dirs
+
+    def _resolve_ffmpeg_paths(self) -> tuple[str | None, str | None]:
+        """Retourne les chemins de ffmpeg/ffprobe si disponibles."""
+        converter = which("ffmpeg")
+        ffprobe = which("ffprobe")
+
+        if converter and ffprobe:
+            return converter, ffprobe
+
+        exe_name = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
+        probe_name = "ffprobe.exe" if os.name == "nt" else "ffprobe"
+
+        for directory in self._candidate_ffmpeg_dirs():
+            converter_path = directory / exe_name
+            ffprobe_path = directory / probe_name
+            if converter_path.exists() and ffprobe_path.exists():
+                return str(converter_path), str(ffprobe_path)
+
+        return None, None
+
+    def _ensure_ffmpeg(self) -> None:
+        """Configure FFmpeg pour pydub ou lève une erreur explicite."""
+        if self._ffmpeg_checked:
+            return
+
+        converter, ffprobe = self._resolve_ffmpeg_paths()
+        if converter and ffprobe:
+            AudioSegment.converter = converter
+            AudioSegment.ffprobe = ffprobe
+            self._ffmpeg_checked = True
+            return
+
+        raise AudioDependencyError("FFmpeg introuvable")
+
+    def ensure_ffmpeg(self) -> None:
+        """Expose la vérification FFmpeg pour d'autres modules."""
+        self._ensure_ffmpeg()
 
     @classmethod
     def is_supported(cls, file_path: Path) -> bool:
         """Vérifie si le format de fichier est supporté."""
         return file_path.suffix.lower() in cls.SUPPORTED_FORMATS
+
+    def validate_audio_file(self, file_path: Path) -> dict:
+        """Valide qu'un fichier audio est lisible et retourne ses infos."""
+        if not self.is_supported(file_path):
+            raise AudioFormatError(str(file_path), file_path.suffix)
+
+        self._ensure_ffmpeg()
+
+        try:
+            return self.get_audio_info(file_path)
+        except CouldntDecodeError as exc:
+            raise AudioCorruptedError(str(file_path), str(exc)) from exc
 
     def get_audio_info(self, file_path: Path) -> dict:
         """
@@ -235,6 +311,7 @@ class AudioProcessor:
             dict avec duration, sample_rate, channels, format
         """
         try:
+            self._ensure_ffmpeg()
             audio = AudioSegment.from_file(str(file_path))
             return {
                 "duration": len(audio) / 1000.0,  # secondes
@@ -265,7 +342,9 @@ class AudioProcessor:
             Chemin du fichier converti
         """
         if not self.is_supported(input_path):
-            raise ValueError(f"Format non supporté: {input_path.suffix}")
+            raise AudioFormatError(str(input_path), input_path.suffix)
+
+        self._ensure_ffmpeg()
 
         if output_path is None:
             temp_dir = get_config().paths.temp
@@ -324,6 +403,7 @@ class AudioProcessor:
 
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        self._ensure_ffmpeg()
         audio = AudioSegment.from_file(str(file_path))
         chunk_ms = chunk_minutes * 60 * 1000
 
